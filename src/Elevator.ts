@@ -22,7 +22,7 @@ export class Elevator implements ElevatorInterface {
 
     private targetFloor: number = NOT_TARGET;
 
-    private currentElevatorFloor: number;
+    private currentFloor: number;
     private floorCount: number;
     private starterFloor: number;
     private capacity: number;
@@ -32,10 +32,10 @@ export class Elevator implements ElevatorInterface {
     private awatingPersons: Array<Person>;
     private goingPersons: Array<Person>;
 
-    private stateSetter: (floors: Floor[]) => void = ([]) => { };
+    private stateSetter: (floors: Floor[]) => void;
 
     constructor(options: ElevatorOptions) {
-        this.currentElevatorFloor = options.currentElevatorFloor;
+        this.currentFloor = options.currentElevatorFloor;
         this.floorCount = options.floorCount;
         this.starterFloor = options.starterFloor;
         this.capacity = options.capacity;
@@ -44,6 +44,8 @@ export class Elevator implements ElevatorInterface {
         this.callQueue = new Queue<number>();
         this.awatingPersons = new Array<Person>();
         this.goingPersons = new Array<Person>();
+
+        this.stateSetter = ([]) => {};
 
         this.initFloors();
     }
@@ -55,7 +57,7 @@ export class Elevator implements ElevatorInterface {
         console.log('awatingPersons', this.awatingPersons);
         console.log('goingPersons', this.goingPersons);
         console.log('targetFloor', this.targetFloor);
-        console.log('currentElevatorFloor: ', this.currentElevatorFloor);
+        console.log('currentElevatorFloor: ', this.currentFloor);
     }
 
     public callElevator(p: Person) {
@@ -71,7 +73,7 @@ export class Elevator implements ElevatorInterface {
     }
 
     public getCurrentElevatorFloor(): number {
-        return this.currentElevatorFloor;
+        return this.currentFloor;
     }
 
     public processing() {
@@ -108,22 +110,22 @@ export class Elevator implements ElevatorInterface {
     }
 
     private chooseMove(iterFloor: number) {
-        if (iterFloor < this.currentElevatorFloor) {
+        if (iterFloor < this.currentFloor) {
             this.move(MoveDirection.Down);
-        } else if (iterFloor > this.currentElevatorFloor) {
+        } else if (iterFloor > this.currentFloor) {
             this.move(MoveDirection.Up);
         }
     }    
 
     private loadElevator(iterFloor: number) {
-        if (iterFloor === this.currentElevatorFloor && this.floors[iterFloor].AwatingPersonCount > 0) {
+        if (iterFloor === this.currentFloor && this.floors[iterFloor].AwatingPersonCount > 0) {
             this.isFreePlace() && this.loadElevatorByFloor(iterFloor);
             this.countTargetFloor();
         }
     }
 
     private unloadElevator(iterFloor: number) {
-        if (this.targetFloor === this.currentElevatorFloor) {
+        if (this.targetFloor === this.currentFloor) {
             // this.floors[this.currentElevatorFloor].State = ???; чтобы заполнить пропуск
             this.unloadElevatorByFloor(iterFloor);          
         } 
@@ -131,32 +133,32 @@ export class Elevator implements ElevatorInterface {
 
     private move(dir: MoveDirection) {    
 
-        if (this.floors[this.currentElevatorFloor].AwatingPersonCount) {
-            this.floors[this.currentElevatorFloor].State = FloorType.PersonAwaiting;
+        if (this.floors[this.currentFloor].AwatingPersonCount) {
+            this.floors[this.currentFloor].State = FloorType.PersonAwaiting;
         } else {
-            this.floors[this.currentElevatorFloor].State = FloorType.EmptyFloor;
+            this.floors[this.currentFloor].State = FloorType.EmptyFloor;
         }        
-        this.floors[this.currentElevatorFloor].GoingPersonCount = 0; 
+        this.floors[this.currentFloor].GoingPersonCount = 0; 
 
 
         this.changeFloorByDirection(dir);
 
 
         if (this.goingPersons.length === 0) {
-            this.floors[this.currentElevatorFloor].State = FloorType.EmptyElevator;
+            this.floors[this.currentFloor].State = FloorType.EmptyElevator;
         }
 
         if (this.goingPersons.length > 0) {
-            this.floors[this.currentElevatorFloor].State = FloorType.PersonInElevator;
-            this.floors[this.currentElevatorFloor].GoingPersonCount = this.goingPersons.length;        
+            this.floors[this.currentFloor].State = FloorType.PersonInElevator;
+            this.floors[this.currentFloor].GoingPersonCount = this.goingPersons.length;        
         }
     }
 
     private changeFloorByDirection(dir: MoveDirection) {
         if (dir === MoveDirection.Down) {
-            this.currentElevatorFloor--;
+            this.currentFloor--;
         } else {
-            this.currentElevatorFloor++;
+            this.currentFloor++;
         }
     }
 
@@ -215,7 +217,7 @@ export class Elevator implements ElevatorInterface {
         for (let i = this.starterFloor; i < this.floorCount + 1; i++) {
             this.floors[i] = new Floor();
 
-            if (i === this.currentElevatorFloor) {
+            if (i === this.currentFloor) {
                 this.floors[i].State = FloorType.EmptyElevator;
             } else {
                 this.floors[i].State = FloorType.EmptyFloor;
