@@ -1,12 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
 import App from './App';
+import ElevatorManagement from './ElevatorManagement';
+import './index.css';
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    {/* <App /> */}
+    <ElevatorManagement starterFloor={1} floorCount={10} />
   </React.StrictMode>,
   document.getElementById('root')
 );
