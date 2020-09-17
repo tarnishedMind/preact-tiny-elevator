@@ -27,6 +27,7 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
 
         this.myElevator = new Elevator(TestSituation_1.options);
         this.persons = TestSituation_1.getPersons();
+
         this.myElevator.setUpdaterFunc((floors: Floor[]) => this.setState({ ...this.state, floors: floors }));
     }
 
@@ -57,13 +58,13 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
             this.persons.push(person);
             this.myElevator.callElevator(person);
         }
-    }    
+    }
 
     render() {
         const floors = this.state.floors.map((f, i) => <ElevatorFloor key={`key${i}`} floorNumber={i} floorOptions={f} />);
         return (
             <>
-                <div>
+                <div className="button-box">
                     <button onClick={this.tick}>One step</button>
                     <button onClick={this.start}>Start</button>
                     <button onClick={this.stop}>Stop</button>
