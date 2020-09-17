@@ -23,7 +23,7 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
 
     constructor(props: ElevatorProps) {
         super(props);
-        this.state = { 
+        this.state = {
             floors: []
         }
 
@@ -35,12 +35,12 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
         });
 
         this.persons = new Array<Person>();
-        
+
         let person = new Person();
         person.CurrentFloor = 3;
         person.Destination = 10;
         this.persons.push(person);
-        
+
         person = new Person();
         person.CurrentFloor = 3;
         person.Destination = 10;
@@ -67,7 +67,7 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
         this.persons.push(person);
 
 
-        this.myElevator.setCallback((floors: Floor[]) => this.setState({...this.state, floors: floors}));
+        this.myElevator.setCallback((floors: Floor[]) => this.setState({ ...this.state, floors: floors }));
     }
 
     componentDidMount() {
@@ -88,17 +88,19 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
     }
 
     render() {
-        const floors = this.state.floors.map((f, i) => <ElevatorFloor key={`key${i}`} floorNumber={i} floorOptions={f}  />); 
+        const floors = this.state.floors.map((f, i) => <ElevatorFloor key={`key${i}`} floorNumber={i} floorOptions={f} />);
         return (
-            <div>
-                <button onClick={this.tick}>tick</button>
-                <button onClick={this.start}>start</button>
-                <button onClick={this.stop}>stop</button>
+            <>
+                <div>
+                    <button onClick={this.tick}>tick</button>
+                    <button onClick={this.start}>start</button>
+                    <button onClick={this.stop}>stop</button>
+                </div>
 
-                <div className="elevator">                
+                <div className="elevator">
                     {floors}
                 </div>
-            </div>
+            </>
 
         );
     }

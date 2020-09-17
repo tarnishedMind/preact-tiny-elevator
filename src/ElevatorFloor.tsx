@@ -46,9 +46,9 @@ export default class ElevatorFloor extends React.Component<ElevatorFloorProps, E
         return (
             <div className="floor">
                 {/* <FontAwesomeIcon icon={faCoffee} /> */}
-                <h1>{this.props.floorNumber}</h1>
-                <p>{typeString}</p>
-                <p>{awaitCount > 0 && `${awaitCount}`}</p> 
+                <h1 className="number">{this.props.floorNumber}</h1>
+                <p className="cell">{typeString}</p>
+                <p className="count">{awaitCount > 0 && `${awaitCount}`}</p> 
             </div>
         );
     }
