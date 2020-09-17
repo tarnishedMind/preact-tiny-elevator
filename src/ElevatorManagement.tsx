@@ -27,7 +27,7 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
 
         this.myElevator = new Elevator(TestSituation_1.options);
         this.persons = TestSituation_1.getPersons();
-        this.myElevator.setCallback((floors: Floor[]) => this.setState({ ...this.state, floors: floors }));
+        this.myElevator.setUpdaterFunc((floors: Floor[]) => this.setState({ ...this.state, floors: floors }));
     }
 
     public componentDidMount() {
@@ -44,7 +44,6 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
 
     public tick = () => {
         this.myElevator.processing();
-        this.myElevator.log();
     }
 
     public generatePersons = (count = 1) => {
