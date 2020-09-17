@@ -6,7 +6,7 @@ import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
   <React.StrictMode>
-    <ElevatorManagement starterFloor={1} floorCount={10} />
+    <ElevatorManagement />
   </React.StrictMode>,
   document.getElementById('root')
 );
