@@ -2,53 +2,55 @@ import React from 'react';
 import { FloorType } from './types/FloorType';
 import { Floor } from './types/Floor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCoffee } from '@fortawesome/free-solid-svg-icons';
-
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 
 interface ElevatorFloorProps {
     floorNumber: number,
     floorOptions: Floor
 }
 
-interface ElevatorFloorState {
-}
+export default class ElevatorFloor extends React.Component<ElevatorFloorProps> {
 
-export default class ElevatorFloor extends React.Component<ElevatorFloorProps, ElevatorFloorState> {
+    private userIcon = <FontAwesomeIcon icon={faUser} />;
+    private cellContent: string | JSX.Element = '';   
 
-    constructor(props: ElevatorFloorProps) {
-        super(props);
-    }
-
-    render() {
-        let goingCount = this.props.floorOptions.GoingPersonCount;
-        let awaitCount = this.props.floorOptions.AwatingPersonCount;
-        let state = this.props.floorOptions.State;
-        let typeString = null;       
-
-        switch (this.props.floorOptions.State) {
+    private fillCellContent = (type: FloorType): void => {
+        switch (type) {
             case FloorType.EmptyElevator:
-                typeString = '|===|';
+                this.cellContent = '|===|';
                 break;
             case FloorType.EmptyFloor:
-                typeString = '____';
+                this.cellContent = '____';
                 break;
             case FloorType.PersonAwaiting:
-                typeString = `PersonAwaiting`;
+                this.cellContent = `Awaiting`;
                 break;
             case FloorType.PersonInElevator:
-                typeString = `PersonInElevator ${goingCount}`;
+                const count = this.props.floorOptions.GoingPersonCount;
+                this.cellContent = this.getUserIconContentByCount(count);
                 break;
-        
+
             default:
-                break;
+                throw new Error("Incorrect FloorType!");
         }
+    }
+
+    private getUserIconContentByCount = (count: number): JSX.Element => {
+        return count > 0 ? <>{this.userIcon} {`: ${count}`}</> : <></>;
+    }
+
+    render(): JSX.Element {
+        let floorType = this.props.floorOptions.State;
+        this.fillCellContent(floorType);
+
+        let awaitCount = this.props.floorOptions.AwatingPersonCount;
+        let awaitContent = this.getUserIconContentByCount(awaitCount);
 
         return (
             <div className="floor">
-                {/* <FontAwesomeIcon icon={faCoffee} /> */}
                 <h1 className="number">{this.props.floorNumber}</h1>
-                <p className="cell">{typeString}</p>
-                <p className="count">{awaitCount > 0 && `${awaitCount}`}</p> 
+                <p className="cell">{this.cellContent}</p>
+                <p className="count">{awaitContent}</p>
             </div>
         );
     }
