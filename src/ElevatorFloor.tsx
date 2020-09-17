@@ -12,22 +12,22 @@ interface ElevatorFloorProps {
 export default class ElevatorFloor extends React.Component<ElevatorFloorProps> {
 
     private userIcon = <FontAwesomeIcon icon={faUser} />;
-    private cellContent: string | JSX.Element = '';   
+    private cellContent: string | JSX.Element = '';
 
     private fillCellContent = (type: FloorType): void => {
         switch (type) {
             case FloorType.EmptyElevator:
-                this.cellContent = '|===|';
+                this.cellContent = '|_____|';
                 break;
             case FloorType.EmptyFloor:
-                this.cellContent = '____';
+                this.cellContent = '_____';
                 break;
             case FloorType.PersonAwaiting:
                 this.cellContent = `Awaiting`;
                 break;
             case FloorType.PersonInElevator:
                 const count = this.props.floorOptions.GoingPersonCount;
-                this.cellContent = this.getUserIconContentByCount(count);
+                this.cellContent = <>| {this.getUserIconContentByCount(count)} |</>;
                 break;
 
             default:
@@ -36,7 +36,7 @@ export default class ElevatorFloor extends React.Component<ElevatorFloorProps> {
     }
 
     private getUserIconContentByCount = (count: number): JSX.Element => {
-        return count > 0 ? <>{this.userIcon} {`: ${count}`}</> : <></>;
+        return count > 0 ? <>{this.userIcon} {`: ${count}`}</> : <span>_____</span>;
     }
 
     render(): JSX.Element {
