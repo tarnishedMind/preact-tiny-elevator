@@ -76,7 +76,6 @@ export class Elevator implements ElevatorInterface {
     private updateCallQueue() {
         this.callQueue.clear();
         this.defineSortOrderForTargeting(); // sort for extreme points priority
-
         this.awatingPersons.forEach(p => this.callQueue.uniqueAdd(p.CurrentFloor as number));        
     }
 
@@ -95,7 +94,7 @@ export class Elevator implements ElevatorInterface {
                     this.targetFloor = this.lastCallQueue;
                 }                
             } else {
-                this.targetFloor = this.goingPersons[0].Destination as number; // !!! target floor rewrite here !!!
+                this.targetFloor = this.goingPersons[0].Destination as number;
             }            
         }
     }
