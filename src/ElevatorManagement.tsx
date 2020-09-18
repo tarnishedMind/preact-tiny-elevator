@@ -3,7 +3,7 @@ import { Elevator } from './Elevator';
 import ElevatorFloor from './ElevatorFloor';
 import { Floor } from './types/Floor';
 import { Person } from './types/Person';
-import { TestSituation_1 } from './utils/ElevatorSituations';
+import { TestSituation_2, TestSituation_1 } from './utils/ElevatorSituations';
 import { getRandomIntInclusive } from './utils/getRandomIntInclusive';
 
 interface ElevatorProps {
@@ -18,6 +18,9 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
     private persons: Array<Person>;
     private timer: any;
 
+    private myTestSituation = TestSituation_1;
+    // private myTestSituation = TestSituation_2;
+
     constructor(props: ElevatorProps) {
         super(props);
 
@@ -25,14 +28,13 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
             floors: []
         }
 
-        this.myElevator = new Elevator(TestSituation_1.options);
-        this.persons = TestSituation_1.getPersons();
-
+        this.myElevator = new Elevator(this.myTestSituation.options);
+        this.persons = this.myTestSituation.getPersons();
         this.myElevator.setUpdaterFunc((floors: Floor[]) => this.setState({ ...this.state, floors: floors }));
     }
 
     public componentDidMount() {
-        this.persons.forEach(p => this.myElevator.callElevator(p));
+        this.initPersons();
     }
 
     public start = () => {
@@ -47,9 +49,13 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
         this.myElevator.processing();
     }
 
+    public initPersons = () => {
+        this.persons.forEach(p => this.myElevator.callElevator(p));
+    }
+
     public generatePersons = (count = 1) => {
-        const min = TestSituation_1.options.starterFloor;
-        const max = TestSituation_1.options.floorCount;
+        const min = this.myTestSituation.options.starterFloor;
+        const max = this.myTestSituation.options.floorCount;
         const rnd = () => getRandomIntInclusive(min, max);
 
         let person = null;

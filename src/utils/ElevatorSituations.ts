@@ -22,3 +22,26 @@ export class TestSituation_1 {
         return persons;
     }
 }
+
+// invert for 1
+export class TestSituation_2 {
+    public static options: ElevatorOptions = {
+        currentElevatorFloor: 1,
+        floorCount: 10,
+        starterFloor: 1,
+        capacity: 4
+    } 
+
+    public static getPersons(): Array<Person> {
+        let persons = new Array<Person>();
+ 
+        persons.push(new Person(8, 1));
+        persons.push(new Person(8, 1));
+        persons.push(new Person(8, 5));
+        persons.push(new Person(8, 3));
+        persons.push(new Person(10, 6));
+        persons.push(new Person(8, 6));
+    
+        return persons;
+    }
+}
