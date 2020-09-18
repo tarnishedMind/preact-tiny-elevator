@@ -27,6 +27,8 @@ export class Elevator implements ElevatorInterface {
     private goingPersons: Array<Person>;
     private updaterFunc: (floors: Floor[]) => void;
 
+    private lastCallQueue: number = NOT_TARGET;
+
     constructor(options: ElevatorOptions) {
         this.currentFloor = options.currentElevatorFloor;
         this.floorCount = options.floorCount;
@@ -51,10 +53,13 @@ export class Elevator implements ElevatorInterface {
         this.countTargetFloor();
 
         if (this.targetFloor !== NOT_TARGET) {
-            this.chooseMoveAndGo(this.targetFloor);
-            this.loadElevator(this.currentFloor); // pass for sync ?
-            this.unloadElevator(this.currentFloor); // pass for sync ?
+            this.chooseMoveAndGo(this.targetFloor);            
         }
+
+        // OR some counts for floor ?
+
+        this.loadElevator(this.currentFloor);
+        this.unloadElevator(this.currentFloor);
 
         this.updateState();
         this.log();
@@ -70,28 +75,43 @@ export class Elevator implements ElevatorInterface {
 
     private updateCallQueue() {
         this.callQueue.clear();
-        this.awatingPersons.forEach(p => this.callQueue.uniqueAdd(p.CurrentFloor as number));
+        this.defineSortOrderForTargeting(); // sort for extreme points priority
+
+        this.awatingPersons.forEach(p => this.callQueue.uniqueAdd(p.CurrentFloor as number));        
     }
 
     private countTargetFloor() {
         if (this.targetFloor === NOT_TARGET && this.awatingPersons.length > 0 && this.goingPersons.length === 0) {
-            this.targetFloor = this.callQueue.extract() as number;
-        }     
+            this.lastCallQueue = this.callQueue.extract() as number;
+            this.targetFloor = this.lastCallQueue;
+        }
+
+
         if (this.goingPersons.length > 0) {
-            this.defineSortOrder();
-            this.targetFloor = this.goingPersons[0].Destination as number;
-            // OR CHECK AWATING NEAR ?
+            this.defineSortOrderForDelivery();
+
+            if (this.awatingPersons.length > 0 && this.isFreePlace() && this.isNearFromCurrent(this.lastCallQueue)) {
+                if (this.targetFloor !== this.lastCallQueue) {
+                    this.targetFloor = this.lastCallQueue;
+                }                
+            } else {
+                this.targetFloor = this.goingPersons[0].Destination as number; // !!! target floor rewrite here !!!
+            }            
         }
     }
 
-    private defineSortOrder() {
+    private isNearFromCurrent(floor: number) {
+        return Math.abs(floor - this.currentFloor) <= 2;
+    }
+
+    private defineSortOrderForDelivery() {
         let lessThanCurCount = 0;
         let moreThanCurCount = 0;
 
         this.goingPersons.forEach(p => {
-            if (p.Destination as number > this.currentFloor) {
+            if (p['Destination'] as number > this.currentFloor) {
                 moreThanCurCount++;
-            } else if (p.Destination as number < this.currentFloor) {
+            } else if (p['Destination'] as number < this.currentFloor) {
                 lessThanCurCount++;
             }
         });
@@ -101,6 +121,30 @@ export class Elevator implements ElevatorInterface {
         } else if (lessThanCurCount > moreThanCurCount) {
             sortPersonDescendingByKey(this.goingPersons, 'Destination');
         } else if (lessThanCurCount === moreThanCurCount) {
+            // pass persons to this func and check this for awating people - pass awating, sort going
+            // if counts equals after that still check random direction 
+        }
+    }
+
+    private defineSortOrderForTargeting() {
+        let lessThanCurCount = 0;
+        let moreThanCurCount = 0;
+
+        // persons.forEach
+        this.awatingPersons.forEach(p => {
+            if (p['CurrentFloor'] as number > this.currentFloor) {
+                moreThanCurCount++;
+            } else if (p['CurrentFloor'] as number < this.currentFloor) {
+                lessThanCurCount++;
+            }
+        });
+
+        if (moreThanCurCount > lessThanCurCount) {
+            sortPersonDescendingByKey(this.awatingPersons, 'CurrentFloor');            
+        } else if (lessThanCurCount > moreThanCurCount) {
+            sortPersonAscendingByKey(this.awatingPersons, 'CurrentFloor');
+        } else if (lessThanCurCount === moreThanCurCount) {
+            // pass persons to this func
             // ? check this for awating people - pass awating, sort going
             // if counts equals after that still chec random direction 
         }
@@ -184,7 +228,12 @@ export class Elevator implements ElevatorInterface {
 
             if (p.Destination === flidx) {
                 this.floors[flidx].GoingPersonCount--;
-                this.floors[flidx].ArrivedPersonCountTotal++;
+                this.floors[flidx].ArrivedPersonCountView++;
+
+                setTimeout(() => {
+                    this.floors[flidx].ArrivedPersonCountView--;
+                    this.updateState();
+                }, 1000);
 
                 if (this.floors[flidx].GoingPersonCount === 0) {
                     this.floors[flidx].State = FloorType.EmptyElevator;

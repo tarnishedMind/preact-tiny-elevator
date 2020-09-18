@@ -13,6 +13,7 @@ export default class ElevatorFloor extends React.Component<ElevatorFloorProps> {
 
     private userIcon = <FontAwesomeIcon icon={faUser} />;
     private walkingIcon = <FontAwesomeIcon icon={faWalking} />;
+    
     private cellContent: string | JSX.Element = '';
 
     private fillCellContent = (type: FloorType): void => {
@@ -38,7 +39,7 @@ export default class ElevatorFloor extends React.Component<ElevatorFloorProps> {
 
     private getCountContent = () => {
         let awaitCount = this.props.floorOptions.AwatingPersonCount;
-        let arrivedCount = this.props.floorOptions.ArrivedPersonCountTotal;
+        let arrivedCount = this.props.floorOptions.ArrivedPersonCountView;
 
         let awaitContent = this.getUserIconContentByCount(awaitCount);        
         let arrivedContent = this.getWalkingIconContentByCount(arrivedCount);
