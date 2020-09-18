@@ -21,22 +21,24 @@ export class Elevator implements ElevatorInterface {
     private floorCount: number;
     private starterFloor: number;
     private capacity: number;
+    // private lastDirection: MoveDirection;
     private floors: Floor[];
     private callQueue: Queue<number>
     private awatingPersons: Array<Person>;
     private goingPersons: Array<Person>;
-    private stateSetter: (floors: Floor[]) => void;
+    private updaterFunc: (floors: Floor[]) => void;
 
     constructor(options: ElevatorOptions) {
         this.currentFloor = options.currentElevatorFloor;
         this.floorCount = options.floorCount;
         this.starterFloor = options.starterFloor;
         this.capacity = options.capacity;
+        // this.lastDirection = MoveDirection.Down;
         this.floors = new Array<Floor>(this.floorCount);
         this.callQueue = new Queue<number>();
         this.awatingPersons = new Array<Person>();
         this.goingPersons = new Array<Person>();
-        this.stateSetter = ([]) => { };
+        this.updaterFunc = ([]) => { };
 
         this.initFloors();
     }
@@ -59,17 +61,15 @@ export class Elevator implements ElevatorInterface {
     }
 
     public setUpdaterFunc(func: (floors: Floor[]) => void) {
-        this.stateSetter = func;
+        this.updaterFunc = func;
     }
 
     private updateState() {
-        this.stateSetter(this.floors);
+        this.updaterFunc(this.floors);
     }
 
     private updateCallQueue() {
-        // some sort and ordering
-        // ? by current floor
-        // ? by current move direction
+        // some sort and ordering ? by current floor ? by current move direction
         this.callQueue.clear();
         this.awatingPersons.forEach(p => this.callQueue.uniqueAdd(p.CurrentFloor as number));
     }
@@ -82,13 +82,11 @@ export class Elevator implements ElevatorInterface {
         // if (this.awatingPersons.length > 0 && this.goingPersons.length > 0 && this.isFreePlace()) {
         //     // if last move UP then sort awating 1 2 3 4
         //     // if last move DOWN then sort awating 4 3 2 1
-
         // } else 
         
-        if (this.goingPersons.length > 0) {
+        if (this.goingPersons.length > 0) {            
             sortPersonAscendingByKey(this.goingPersons, 'Destination'); // 1 2 3 4 if move from DOWN to UP (1 -> 10)
             // sortPersonDescendingByKey(this.goingPersons, 'Destination'); // 4 3 2 1 if move from UP to DOWN (10 -> 1)
-
             this.targetFloor = this.goingPersons[0].Destination as number;
         }
     }
@@ -104,6 +102,8 @@ export class Elevator implements ElevatorInterface {
             this.move(MoveDirection.Down);
         } else if (floor > this.currentFloor) {
             this.move(MoveDirection.Up);
+        } else if (floor === this.currentFloor) {
+            return;
         }
     }
 
@@ -116,30 +116,38 @@ export class Elevator implements ElevatorInterface {
 
     private unloadElevator(floor: number) {
         if (this.targetFloor === this.currentFloor) {
-            // this.floors[this.currentElevatorFloor].State = ???; чтобы заполнить пропуск
             this.unloadElevatorByFloor(floor);
         }
     }
 
     private move(dir: MoveDirection) {
-        if (this.floors[this.currentFloor].AwatingPersonCount) {
-            this.floors[this.currentFloor].State = FloorType.PersonAwaiting;
-        } else {
-            this.floors[this.currentFloor].State = FloorType.EmptyFloor;
-        }
-        this.floors[this.currentFloor].GoingPersonCount = 0;
+        this.fillPrevFloor(this.currentFloor);
+        this.calculateFloor(dir);
+        this.fillCurrentFloor(this.currentFloor);
+    }
 
-
+    private calculateFloor(dir: MoveDirection) {
         dir === MoveDirection.Down ? this.currentFloor-- : this.currentFloor++;
+    }
 
-
-        if (this.goingPersons.length === 0) {
-            this.floors[this.currentFloor].State = FloorType.EmptyElevator;
+    private fillPrevFloor(floorBeforeMove: number) {
+        let i = floorBeforeMove;        
+        if (this.floors[i].AwatingPersonCount) {
+            this.floors[i].State = FloorType.PersonAwaiting;
+        } else {
+            this.floors[i].State = FloorType.EmptyFloor;
         }
+        this.floors[i].GoingPersonCount = 0;
+    }
 
+    private fillCurrentFloor(floorAfterMove: number) {
+        let i = floorAfterMove;    
+        if (this.goingPersons.length === 0) {
+            this.floors[i].State = FloorType.EmptyElevator;
+        }
         if (this.goingPersons.length > 0) {
-            this.floors[this.currentFloor].State = FloorType.PersonInElevator;
-            this.floors[this.currentFloor].GoingPersonCount = this.goingPersons.length;
+            this.floors[i].State = FloorType.PersonInElevator;
+            this.floors[i].GoingPersonCount = this.goingPersons.length;
         }
     }
 
@@ -164,7 +172,16 @@ export class Elevator implements ElevatorInterface {
 
     private unloadElevatorByFloor(iterFloor: number) {
         this.floors[iterFloor].GoingPersonCount--;
-        const arrived = this.goingPersons.splice(0, 1);
+        this.floors[iterFloor].ArrivedPersonCountTotal++;
+
+        if (this.floors[iterFloor].GoingPersonCount === 0) {
+            this.floors[iterFloor].State = FloorType.EmptyElevator;
+        }        
+
+        const arrived = this.goingPersons.splice(0, 1)[0];
+        arrived.State = PersonType.Done;        
+        console.log(arrived, ' --- Was arrived! --- ');
+        
         this.targetFloor = NOT_TARGET;
     }
 
@@ -181,6 +198,14 @@ export class Elevator implements ElevatorInterface {
             this.floors[i].GoingPersonCount++;
         }
     }
+
+    // private getCurrentMoveDirection() {
+    //     if (this.lastDirection === MoveDirection.Down) {
+                
+    //     } else {
+
+    //     }
+    // }
 
     private initFloors(): void {
         for (let i = this.starterFloor; i < this.floorCount + 1; i++) {
