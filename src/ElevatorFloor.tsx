@@ -2,7 +2,7 @@ import React from 'react';
 import { FloorType } from './types/FloorType';
 import { Floor } from './types/Floor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faWalking } from '@fortawesome/free-solid-svg-icons';
 
 interface ElevatorFloorProps {
     floorNumber: number,
@@ -12,6 +12,7 @@ interface ElevatorFloorProps {
 export default class ElevatorFloor extends React.Component<ElevatorFloorProps> {
 
     private userIcon = <FontAwesomeIcon icon={faUser} />;
+    private walkingIcon = <FontAwesomeIcon icon={faWalking} />;
     private cellContent: string | JSX.Element = '';
 
     private fillCellContent = (type: FloorType): void => {
@@ -35,22 +36,33 @@ export default class ElevatorFloor extends React.Component<ElevatorFloorProps> {
         }
     }
 
+    private getCountContent = () => {
+        let awaitCount = this.props.floorOptions.AwatingPersonCount;
+        let arrivedCount = this.props.floorOptions.ArrivedPersonCountTotal;
+
+        let awaitContent = this.getUserIconContentByCount(awaitCount);        
+        let arrivedContent = this.getWalkingIconContentByCount(arrivedCount);
+
+        return <>{awaitContent} {arrivedContent}</>;
+    }
+
     private getUserIconContentByCount = (count: number): JSX.Element => {
-        return count > 0 ? <>{this.userIcon} {`: ${count}`}</> : <span>_____</span>;
+        return count > 0 ? <>{this.userIcon} {`: ${count}`}</> : <></>;
+    }
+
+    private getWalkingIconContentByCount = (count: number): JSX.Element => {
+        return count > 0 ? <>{this.walkingIcon} {`: ${count}`}</> : <></>;
     }
 
     render(): JSX.Element {
         let floorType = this.props.floorOptions.State;
         this.fillCellContent(floorType);
 
-        let awaitCount = this.props.floorOptions.AwatingPersonCount;
-        let awaitContent = this.getUserIconContentByCount(awaitCount);
-
         return (
             <div className="floor">
                 <h1 className="number">{this.props.floorNumber}</h1>
                 <p className="cell">{this.cellContent}</p>
-                <p className="count">{awaitContent}</p>
+                <p className="count">{this.getCountContent()}</p>
             </div>
         );
     }
