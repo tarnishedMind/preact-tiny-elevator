@@ -1,5 +1,5 @@
 import React from 'react';
-import { Elevator } from './Elevator';
+import { Elevator } from './Elevator/Elevator';
 import ElevatorFloor from './ElevatorFloor';
 import { Floor } from './types/Floor';
 import { Person } from './types/Person';
@@ -30,7 +30,9 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
 
         this.myElevator = new Elevator(this.myTestSituation.options);
         this.persons = this.myTestSituation.getPersons();
-        this.myElevator.setUpdaterFunc((floors: Floor[]) => this.setState({ ...this.state, floors: floors }));
+        this.myElevator.setUpdaterFunc(
+            (floors: Floor[]) => this.setState({ ...this.state, floors: floors })
+        );
     }
 
     public componentDidMount() {
