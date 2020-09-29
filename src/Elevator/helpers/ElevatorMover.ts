@@ -11,19 +11,24 @@ interface ElevatorMoverInterface {
 export class ElevatorMover implements ElevatorMoverInterface {
 
     public chooseMoveAndGo(floor: number) {
-        if (floor < Storage.getCurrentFloor()) {
+        const currentFloor = Storage.getCurrentFloor();
+        if (floor < currentFloor) {
             this.move(MoveDirection.Down);
-        } else if (floor > Storage.getCurrentFloor()) {
+        } else if (floor > currentFloor) {
             this.move(MoveDirection.Up);
-        } else if (floor === Storage.getCurrentFloor()) {
+        } else if (floor === currentFloor) {
             return;
         }
     }
 
     private move(dir: MoveDirection) {
-        this.fillPrevFloor(Storage.getCurrentFloor());
+        const prevFloor = Storage.getCurrentFloor();
+        this.fillPrevFloor(prevFloor);
+
         this.changeFloorByDirection(dir);
-        this.fillCurrentFloor(Storage.getCurrentFloor());
+        
+        const floorAfterChange = Storage.getCurrentFloor();
+        this.fillCurrentFloor(floorAfterChange);
     }
 
     private fillPrevFloor(floorBeforeMove: number) {
