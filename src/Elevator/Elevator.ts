@@ -1,14 +1,13 @@
+import { NOT_TARGET } from '../constants';
+import { defineSortOrderForDelivery, defineSortOrderForTargeting } from '../helpers/PersonSorter';
+import { Queue } from "../helpers/Queue";
 import { ElevatorOptions } from "../types/ElevatorOptions";
 import { Floor } from "../types/Floor";
-import { FloorType } from "../types/FloorType";
 import { Person } from "../types/Person";
-import { PersonType } from "../types/PersonType";
-import { Queue } from "../types/Queue";
+import { ElevatorLoader } from './helpers/ElevatorLoader';
 import { ElevatorMover } from './helpers/ElevatorMover';
 import { ElevatorStaticStorage } from './helpers/ElevatorStaticStorage';
-import { defineSortOrderForDelivery, defineSortOrderForTargeting } from '../utils/PersonSorter';
 
-const NOT_TARGET = -1;
 const Storage = ElevatorStaticStorage;
 
 interface ElevatorInterface {
@@ -19,39 +18,24 @@ interface ElevatorInterface {
     ): void
 }
 
-export class Elevator implements ElevatorInterface {
-    private targetFloor: number = NOT_TARGET;
-    private floorCount: number;
-    private starterFloor: number;
-    private capacity: number;    
-    private callQueue: Queue<number>
-
-    private updaterFunc: (floors: Floor[]) => void;
-
+export class Elevator implements ElevatorInterface {  
+    private targetFloor = NOT_TARGET;
+    private callQueue: Queue<number>;
     private lastCallQueue: number = NOT_TARGET;
-
+    
     private mover = new ElevatorMover();
+    private loader = new ElevatorLoader(() => { this.clearTargetFloor() });
 
     constructor(options: ElevatorOptions) {
-        Storage.currentFloor = options.currentElevatorFloor;
-        this.floorCount = options.floorCount;
-        this.starterFloor = options.starterFloor;
-        this.capacity = options.capacity;        
-        this.callQueue = new Queue<number>();
-
-        Storage.floors = new Array<Floor>(this.floorCount);
-        Storage.awatingPersons = new Array<Person>();
-        Storage.goingPersons = new Array<Person>();
-
-        this.updaterFunc = ([]) => { };
-
-        this.initFloors();
+        Storage.initOptions(options);
+        Storage.initFloors();
+        this.callQueue = new Queue<number>();        
     }
 
     public callElevator(p: Person) {
-        this.addPersonByState(p);
-        this.updateState();
-    }
+        Storage.addPersonByState(p);
+        Storage.updateState();
+    }    
 
     public processing() {
         this.updateCallQueue();
@@ -61,24 +45,20 @@ export class Elevator implements ElevatorInterface {
             this.mover.chooseMoveAndGo(this.targetFloor);
             
             if (Storage.goingPersons.length) {
-                this.loadElevator(Storage.currentFloor);
+                this.loader.loadElevator(Storage.getCurrentFloor());
             } else {
-                this.loadElevator(this.targetFloor);
+                this.loader.loadElevator(this.targetFloor);
             }
             
-            this.unloadElevator(this.targetFloor);
+            this.loader.unloadElevator(this.targetFloor);
         }        
 
-        this.updateState();
+        Storage.updateState();
         this.log();
     }
 
     public setUpdaterFunc(func: (floors: Floor[]) => void) {
-        this.updaterFunc = func;
-    }
-
-    private updateState() {
-        this.updaterFunc(Storage.floors);
+        Storage.setUpdaterFunc(func);
     }
 
     private updateCallQueue() {
@@ -100,87 +80,8 @@ export class Elevator implements ElevatorInterface {
         }
     }
 
-    private loadElevator(floor: number) {
-        if (floor === Storage.currentFloor && Storage.floors[floor].AwatingPersonCount > 0 && this.isFreePlace()) {
-            this.loadElevatorByFloor(floor);
-        }
-    }
-
-    private unloadElevator(floor: number) {
-        if (floor === Storage.currentFloor && Storage.floors[floor].GoingPersonCount > 0) {
-            this.unloadElevatorByFloor(floor);
-        }
-    }  
-
-    private isFreePlace() {
-        return Storage.goingPersons.length < this.capacity;
-    }
-
-    private loadElevatorByFloor(floor: number) {
-        for (let i = 0; i < Storage.awatingPersons.length; i++) {
-            const p = Storage.awatingPersons[i];
-
-            if (p.CurrentFloor === floor && this.isFreePlace()) {
-                p.State = PersonType.InElevator;
-                this.addPersonByState(p);
-
-                Storage.floors[floor].AwatingPersonCount--;
-                Storage.awatingPersons.splice(i, 1);
-                i--;
-            }
-        }
-    }
-
-    private unloadElevatorByFloor(flidx: number) {
-        for (let i = 0; i < Storage.goingPersons.length; i++) {
-            const p = Storage.goingPersons[i];
-
-            if (p.Destination === flidx) {
-                Storage.floors[flidx].GoingPersonCount--;
-                Storage.floors[flidx].ArrivedPersonCountView++;
-
-                setTimeout(() => {
-                    Storage.floors[flidx].ArrivedPersonCountView = 0;
-                    this.updateState();
-                }, 1000);
-
-                if (Storage.floors[flidx].GoingPersonCount === 0) {
-                    Storage.floors[flidx].State = FloorType.EmptyElevator;
-                }
-
-                const arrived = Storage.goingPersons.splice(0, 1)[0];
-                arrived.State = PersonType.Done;
-                console.log(arrived, ' --- Was arrived! --- ');
-
-                this.targetFloor = NOT_TARGET;
-            }
-        }
-    }
-
-    private addPersonByState(p: Person) {
-        const i = p.CurrentFloor as number;
-
-        if (p.State === PersonType.Awaiting || p.State === undefined) {
-            Storage.awatingPersons.push(p);
-            Storage.floors[i].State = FloorType.PersonAwaiting;
-            Storage.floors[i].AwatingPersonCount++;
-        } else if (p.State === PersonType.InElevator) {
-            Storage.goingPersons.push(p);
-            Storage.floors[i].State = FloorType.PersonInElevator;
-            Storage.floors[i].GoingPersonCount++;
-        }
-    }
-
-    private initFloors(): void {
-        for (let i = this.starterFloor; i < this.floorCount + 1; i++) {
-            Storage.floors[i] = new Floor();
-
-            if (i === Storage.currentFloor) {
-                Storage.floors[i].State = FloorType.EmptyElevator;
-            } else {
-                Storage.floors[i].State = FloorType.EmptyFloor;
-            }
-        }
+    private clearTargetFloor() {
+        this.targetFloor = NOT_TARGET;
     }
 
     private log() {
@@ -192,7 +93,7 @@ export class Elevator implements ElevatorInterface {
         console.log('Going Persons:', Storage.goingPersons);
 
         console.log('Target Floor: ', this.targetFloor);
-        console.log('Current Elevator Floor: ', Storage.currentFloor);
+        console.log('Current Elevator Floor: ', Storage.getCurrentFloor());
     }
 }
 
