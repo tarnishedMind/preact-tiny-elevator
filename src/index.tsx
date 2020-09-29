@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import ElevatorManagement from './ElevatorManagement';
+import ElevatorManagement from './components/ElevatorManagement';
 import './index.scss';
 import * as serviceWorker from './serviceWorker';
 

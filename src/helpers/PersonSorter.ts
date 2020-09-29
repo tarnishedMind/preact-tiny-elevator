@@ -75,9 +75,9 @@ function getPersonCountByFloors(persons: Person[], floorKey: keyof Person) {
         moreThanKeyCount: 0
     }
     persons.forEach(p => {
-        if (p[floorKey] as number > Storage.currentFloor) {
+        if (p[floorKey] as number > Storage.getCurrentFloor()) {
             countObject.moreThanKeyCount++;
-        } else if (p[floorKey] as number < Storage.currentFloor) {
+        } else if (p[floorKey] as number < Storage.getCurrentFloor()) {
             countObject.lessThanKeyCount++;                
         }
     });

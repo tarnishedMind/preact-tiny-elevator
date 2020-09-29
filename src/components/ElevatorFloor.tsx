@@ -1,8 +1,8 @@
-import React from 'react';
-import { FloorType } from './types/FloorType';
-import { Floor } from './types/Floor';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faWalking } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React from 'react';
+import { Floor } from '../types/Floor';
+import { FloorType } from '../types/FloorType';
 
 interface ElevatorFloorProps {
     floorNumber: number,

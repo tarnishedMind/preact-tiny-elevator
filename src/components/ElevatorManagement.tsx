@@ -1,10 +1,10 @@
 import React from 'react';
-import { Elevator } from './Elevator/Elevator';
+import { Elevator } from '../Elevator/Elevator';
 import ElevatorFloor from './ElevatorFloor';
-import { Floor } from './types/Floor';
-import { Person } from './types/Person';
-import { TestSituation_2, TestSituation_1 } from './utils/ElevatorSituations';
-import { getRandomIntInclusive } from './utils/getRandomIntInclusive';
+import { Floor } from '../types/Floor';
+import { Person } from '../types/Person';
+import { TestSituation_2, TestSituation_1 } from '../helpers/ElevatorSituations';
+import { getRandomIntInclusive } from '../utils/getRandomIntInclusive';
 
 interface ElevatorProps {
 }
@@ -18,8 +18,8 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
     private persons: Array<Person>;
     private timer: any;
 
-    private myTestSituation = TestSituation_1;
-    // private myTestSituation = TestSituation_2;
+    // private myTestSituation = TestSituation_1;
+    private myTestSituation = TestSituation_2;
 
     constructor(props: ElevatorProps) {
         super(props);
