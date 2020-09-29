@@ -11,19 +11,19 @@ interface ElevatorMoverInterface {
 export class ElevatorMover implements ElevatorMoverInterface {
 
     public chooseMoveAndGo(floor: number) {
-        if (floor < Storage.currentFloor) {
+        if (floor < Storage.getCurrentFloor()) {
             this.move(MoveDirection.Down);
-        } else if (floor > Storage.currentFloor) {
+        } else if (floor > Storage.getCurrentFloor()) {
             this.move(MoveDirection.Up);
-        } else if (floor === Storage.currentFloor) {
+        } else if (floor === Storage.getCurrentFloor()) {
             return;
         }
     }
 
     private move(dir: MoveDirection) {
-        this.fillPrevFloor(Storage.currentFloor);
-        this.calculateFloor(dir);
-        this.fillCurrentFloor(Storage.currentFloor);
+        this.fillPrevFloor(Storage.getCurrentFloor());
+        this.changeFloorByDirection(dir);
+        this.fillCurrentFloor(Storage.getCurrentFloor());
     }
 
     private fillPrevFloor(floorBeforeMove: number) {
@@ -36,8 +36,8 @@ export class ElevatorMover implements ElevatorMoverInterface {
         Storage.floors[i].GoingPersonCount = 0;
     }
 
-    private calculateFloor(dir: MoveDirection) {
-        dir === MoveDirection.Down ? Storage.currentFloor-- : Storage.currentFloor++;
+    private changeFloorByDirection(dir: MoveDirection) {
+        dir === MoveDirection.Down ? Storage.decrementCurrentFloor() : Storage.incrementCurrentFloor();
     }
 
     private fillCurrentFloor(floorAfterMove: number) {
