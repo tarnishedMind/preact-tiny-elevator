@@ -1,12 +1,12 @@
 import React from 'react';
 import { Elevator } from '../Elevator/Elevator';
-import ElevatorFloor from './ElevatorFloor';
+import { ElevatorStaticStorage } from '../Elevator/helpers/ElevatorStaticStorage';
+import { TestSituation } from '../helpers/ElevatorSituations';
 import { Floor } from '../types/Floor';
 import { Person } from '../types/Person';
-import { getRandomIntInclusive } from '../utils/getRandomIntInclusive';
-import { TestSituation } from '../helpers/ElevatorSituations';
 import { Situation } from '../types/Situation';
-import { ElevatorStaticStorage } from '../Elevator/helpers/ElevatorStaticStorage';
+import { getRandomIntInclusive } from '../utils/getRandomIntInclusive';
+import ElevatorFloor from './ElevatorFloor';
 
 interface ElevatorProps {
 }

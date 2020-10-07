@@ -1,5 +1,4 @@
 import { Person } from '../types/Person';
-import { ElevatorOptions } from '../types/ElevatorOptions';
 import { Situation } from '../types/Situation';
 
 export class TestSituation {
