@@ -1,6 +1,6 @@
 import React from 'react';
 import { Elevator } from '../Elevator/Elevator';
-import { ElevatorStaticStorage } from '../Elevator/helpers/ElevatorStaticStorage';
+import { ElevatorStorage } from '../Elevator/helpers/ElevatorStorage';
 import { TestSituation } from '../helpers/ElevatorSituations';
 import { Floor } from '../types/Floor';
 import { Person } from '../types/Person';
@@ -16,6 +16,7 @@ interface ElevatorState {
 }
 
 export default class ElevatorManagement extends React.Component<ElevatorProps, ElevatorState> {
+    private storage: ElevatorStorage;
     private currentSituation: Situation;
     private myElevator: Elevator;
     private persons: Array<Person>;
@@ -27,11 +28,11 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
         this.state = {
             floors: []
         }
-        
-        this.currentSituation = TestSituation.get(0)
-        this.myElevator = new Elevator(this.currentSituation.options);
-        this.persons = this.currentSituation.persons;
 
+        this.currentSituation = TestSituation.get(0);
+        this.persons = this.currentSituation.persons;
+        this.storage = new ElevatorStorage(this.currentSituation.options);
+        this.myElevator = new Elevator(this.storage);     
         this.myElevator.setUpdaterFunc(
             (floors: Floor[]) => this.setState({ ...this.state, floors: floors })
         );
@@ -55,10 +56,15 @@ export default class ElevatorManagement extends React.Component<ElevatorProps, E
 
     public getTest = (n: number) => {
         this.currentSituation = TestSituation.get(n);
-        this.myElevator = new Elevator(this.currentSituation.options);
         this.persons = this.currentSituation.persons;
+        this.storage = new ElevatorStorage(this.currentSituation.options);
+        this.myElevator = new Elevator(this.storage);
+        this.myElevator.setUpdaterFunc(
+            (floors: Floor[]) => this.setState({ ...this.state, floors: floors })
+        ); 
+        
         this.initPersons();
-        ElevatorStaticStorage.updateState();
+        this.storage.updateState();
     }
 
     public generatePersons = (count = 1) => {
