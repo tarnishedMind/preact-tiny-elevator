@@ -1,8 +1,6 @@
-import { PersonType } from '../../types/PersonType';
 import { FloorType } from '../../types/FloorType';
-import { ElevatorStaticStorage } from './ElevatorStaticStorage';
-
-const Storage = ElevatorStaticStorage;
+import { PersonType } from '../../types/PersonType';
+import { ElevatorStorage } from './ElevatorStorage';
 
 interface ElevatorLoaderInterface {
     loadElevator(floor: number): void;
@@ -12,60 +10,62 @@ interface ElevatorLoaderInterface {
 export class ElevatorLoader implements ElevatorLoaderInterface {
 
     private targetClearer: () => void;
+    private storage: ElevatorStorage;
 
-    constructor(targetClearer: () => void) {
+    constructor(storage: ElevatorStorage, targetClearer: () => void) {
         this.targetClearer = targetClearer;
+        this.storage = storage;
     }
 
     public loadElevator(floor: number) {
-        if (floor === Storage.getCurrentFloor() && Storage.floors[floor].AwatingPersonCount > 0 && this.isFreePlace()) {
+        if (floor === this.storage.CurrentFloor && this.storage.floors[floor].AwatingPersonCount > 0 && this.isFreePlace()) {
             this.loadElevatorByFloor(floor);
         }
     }
 
     public unloadElevator(floor: number) {
-        if (floor === Storage.getCurrentFloor() && Storage.floors[floor].GoingPersonCount > 0) {
+        if (floor === this.storage.CurrentFloor && this.storage.floors[floor].GoingPersonCount > 0) {
             this.unloadElevatorByFloor(floor);
         }
     }  
 
     private isFreePlace() {
-        return Storage.goingPersons.length < Storage.capacity;
+        return this.storage.goingPersons.length < this.storage.capacity;
     }
 
     private loadElevatorByFloor(idx: number) {
-        for (let i = 0; i < Storage.awatingPersons.length; i++) {
-            const p = Storage.awatingPersons[i];
+        for (let i = 0; i < this.storage.awatingPersons.length; i++) {
+            const p = this.storage.awatingPersons[i];
 
             if (p.CurrentFloor === idx && this.isFreePlace()) {
                 p.State = PersonType.InElevator;
-                Storage.addPersonByState(p);
+                this.storage.addPersonByState(p);
 
-                Storage.floors[idx].AwatingPersonCount--;
-                Storage.awatingPersons.splice(i, 1);
+                this.storage.floors[idx].AwatingPersonCount--;
+                this.storage.awatingPersons.splice(i, 1);
                 i--;
             }
         }
     }
 
     private unloadElevatorByFloor(idx: number) {
-        for (let i = 0; i < Storage.goingPersons.length; i++) {
-            const p = Storage.goingPersons[i];
+        for (let i = 0; i < this.storage.goingPersons.length; i++) {
+            const p = this.storage.goingPersons[i];
 
             if (p.Destination === idx) {
-                Storage.floors[idx].GoingPersonCount--;
-                Storage.floors[idx].ArrivedPersonCountView++;
+                this.storage.floors[idx].GoingPersonCount--;
+                this.storage.floors[idx].ArrivedPersonCountView++;
 
                 setTimeout(() => {
-                    Storage.floors[idx].ArrivedPersonCountView = 0;
-                    Storage.updateState();
+                    this.storage.floors[idx].ArrivedPersonCountView = 0;
+                    this.storage.updateState();
                 }, 1000);
 
-                if (Storage.floors[idx].GoingPersonCount === 0) {
-                    Storage.floors[idx].State = FloorType.EmptyElevator;
+                if (this.storage.floors[idx].GoingPersonCount === 0) {
+                    this.storage.floors[idx].State = FloorType.EmptyElevator;
                 }
 
-                const arrived = Storage.goingPersons.splice(0, 1)[0];
+                const arrived = this.storage.goingPersons.splice(0, 1)[0];
                 arrived.State = PersonType.Done;
                 console.log(arrived, ' --- Was arrived! --- ');
 

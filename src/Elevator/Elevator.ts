@@ -1,14 +1,11 @@
 import { NOT_TARGET } from '../constants';
-import { defineSortOrderForDelivery, defineSortOrderForTargeting } from '../helpers/PersonSorter';
 import { Queue } from "../helpers/Queue";
-import { ElevatorOptions } from "../types/ElevatorOptions";
 import { Floor } from "../types/Floor";
 import { Person } from "../types/Person";
 import { ElevatorLoader } from './helpers/ElevatorLoader';
 import { ElevatorMover } from './helpers/ElevatorMover';
-import { ElevatorStaticStorage } from './helpers/ElevatorStaticStorage';
-
-const Storage = ElevatorStaticStorage;
+import { ElevatorSorter } from './helpers/ElevatorSorter';
+import { ElevatorStorage } from './helpers/ElevatorStorage';
 
 interface ElevatorInterface {
     callElevator(p: Person): void,
@@ -23,18 +20,24 @@ export class Elevator implements ElevatorInterface {
     private callQueue: Queue<number>;
     private lastCallQueue: number = NOT_TARGET;
     
-    private mover = new ElevatorMover();
-    private loader = new ElevatorLoader(() => { this.clearTargetFloor() });
+    private storage: ElevatorStorage;
+    private mover: ElevatorMover;
+    private loader: ElevatorLoader;
+    private sorter: ElevatorSorter;
 
-    constructor(options: ElevatorOptions) {
-        Storage.initOptions(options);
-        Storage.initFloors();
-        this.callQueue = new Queue<number>();        
+    constructor(storage: ElevatorStorage) {
+        this.storage = storage;
+        this.storage.initFloors();
+        this.callQueue = new Queue<number>();
+        
+        this.mover = new ElevatorMover(storage);
+        this.loader = new ElevatorLoader(storage, () => this.clearTargetFloor());
+        this.sorter = new ElevatorSorter(storage);
     }
 
     public callElevator(p: Person) {
-        Storage.addPersonByState(p);
-        Storage.updateState();
+        this.storage.addPersonByState(p);
+        this.storage.updateState();
     }    
 
     public processing() {
@@ -44,8 +47,8 @@ export class Elevator implements ElevatorInterface {
         if (this.targetFloor !== NOT_TARGET) {
             this.mover.chooseMoveAndGo(this.targetFloor);
             
-            if (Storage.goingPersons.length) {
-                this.loader.loadElevator(Storage.getCurrentFloor());
+            if (this.storage.goingPersons.length) {
+                this.loader.loadElevator(this.storage.CurrentFloor);
             } else {
                 this.loader.loadElevator(this.targetFloor);
             }
@@ -53,30 +56,30 @@ export class Elevator implements ElevatorInterface {
             this.loader.unloadElevator(this.targetFloor);
         }        
 
-        Storage.updateState();
+        this.storage.updateState();
         this.log();
     }
 
     public setUpdaterFunc(func: (floors: Floor[]) => void) {
-        Storage.setUpdaterFunc(func);
+        this.storage.UpdaterFunc = func;
     }
 
     private updateCallQueue() {
         this.callQueue.clear();
-        defineSortOrderForTargeting(); // sort for extreme points priority
-        Storage.awatingPersons.forEach(p => this.callQueue.uniqueAdd(p.CurrentFloor as number));
+        this.sorter.defineSortOrderForTargeting(); // sort for extreme points priority
+        this.storage.awatingPersons.forEach(p => this.callQueue.uniqueAdd(p.CurrentFloor as number));
     }
 
     private countTargetFloor() {
-        if (this.targetFloor === NOT_TARGET && Storage.awatingPersons.length > 0 && Storage.goingPersons.length === 0) {
+        if (this.targetFloor === NOT_TARGET && this.storage.awatingPersons.length > 0 && this.storage.goingPersons.length === 0) {
             const first = this.callQueue.extract() as number;
             this.lastCallQueue = first;
             this.targetFloor = first;
         }
 
-        if (Storage.goingPersons.length > 0) {
-            defineSortOrderForDelivery();
-            this.targetFloor = Storage.goingPersons[0].Destination as number;
+        if (this.storage.goingPersons.length > 0) {
+            this.sorter.defineSortOrderForDelivery();
+            this.targetFloor = this.storage.goingPersons[0].Destination as number;
         }
     }
 
@@ -87,13 +90,13 @@ export class Elevator implements ElevatorInterface {
     private log() {
         console.log('=== === === === ===');
 
-        console.log('Floors:', Storage.floors);
+        console.log('Floors:', this.storage.floors);
         console.log('Call Queue:', this.callQueue);
-        console.log('Awating Persons:', Storage.awatingPersons);
-        console.log('Going Persons:', Storage.goingPersons);
+        console.log('Awating Persons:', this.storage.awatingPersons);
+        console.log('Going Persons:', this.storage.goingPersons);
 
         console.log('Target Floor: ', this.targetFloor);
-        console.log('Current Elevator Floor: ', Storage.getCurrentFloor());
+        console.log('Current Elevator Floor: ', this.storage.CurrentFloor);
     }
 }
 
