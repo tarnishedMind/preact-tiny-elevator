@@ -8,13 +8,12 @@ interface ElevatorStorageInterface {
     
 }
 
-export class ElevatorStorage implements ElevatorStorageInterface { 
-    public capacity: number;
-
+export class ElevatorStorage implements ElevatorStorageInterface {    
     public floors: Floor[];
     public awatingPersons: Array<Person>;
     public goingPersons: Array<Person>;
 
+    private _capacity: number;
     private _currentFloor: number;
     private _floorCount: number;
     private _starterFloor: number;
@@ -22,7 +21,7 @@ export class ElevatorStorage implements ElevatorStorageInterface {
     private _updaterFunc: (floors: Floor[]) => void = () => {};
 
     public constructor(options: ElevatorOptions) {
-        this.capacity = options.capacity;
+        this._capacity = options.capacity;
 
         this._currentFloor = options.currentElevatorFloor;
         this._floorCount = options.floorCount;
@@ -39,6 +38,10 @@ export class ElevatorStorage implements ElevatorStorageInterface {
 
     public updateState(): void {
         this._updaterFunc(this.floors);
+    }
+
+    public get Capacity(): number {
+        return this._capacity;
     }
 
     public get CurrentFloor(): number {

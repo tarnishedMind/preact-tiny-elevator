@@ -30,7 +30,7 @@ export class ElevatorLoader implements ElevatorLoaderInterface {
     }  
 
     private isFreePlace() {
-        return this.storage.goingPersons.length < this.storage.capacity;
+        return this.storage.goingPersons.length < this.storage.Capacity;
     }
 
     private loadElevatorByFloor(idx: number) {
