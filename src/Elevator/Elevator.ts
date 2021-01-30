@@ -1,5 +1,6 @@
 import { NOT_TARGET } from '../constants';
 import { Queue } from "../helpers/Queue";
+import { ElevatorOptions } from '../types/ElevatorOptions';
 import { Floor } from "../types/Floor";
 import { Person } from "../types/Person";
 import { ElevatorLoader } from './helpers/ElevatorLoader';
@@ -25,14 +26,18 @@ export class Elevator implements ElevatorInterface {
     private loader: ElevatorLoader;
     private sorter: ElevatorSorter;
 
-    constructor(storage: ElevatorStorage) {
-        this.storage = storage;
+    constructor(options: ElevatorOptions) {
+        this.storage = new ElevatorStorage(options);
         this.storage.initFloors();
         this.callQueue = new Queue<number>();
         
-        this.mover = new ElevatorMover(storage);
-        this.loader = new ElevatorLoader(storage, () => this.clearTargetFloor());
-        this.sorter = new ElevatorSorter(storage);
+        this.mover = new ElevatorMover(this.storage);
+        this.loader = new ElevatorLoader(this.storage, () => this.clearTargetFloor());
+        this.sorter = new ElevatorSorter(this.storage);
+    }
+
+    public updateState(): void {
+        this.storage.updateState();
     }
 
     public callElevator(p: Person) {

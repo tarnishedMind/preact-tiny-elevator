@@ -1,8 +1,8 @@
 import { ElevatorOptions } from '../../types/ElevatorOptions';
 import { Floor } from '../../types/Floor';
+import { FloorType } from '../../types/FloorType';
 import { Person } from '../../types/Person';
 import { PersonType } from '../../types/PersonType';
-import { FloorType } from '../../types/FloorType';
 
 interface ElevatorStorageInterface {
     
