@@ -1,10 +1,7 @@
 import { Person } from '../../types/Person';
 import { ElevatorStorage } from './ElevatorStorage';
 
-enum SortDirection {
-    Ascending,
-    Descending
-}
+type FloorKey = 'CurrentFloor' | 'Destination';
 
 export class ElevatorSorter {
 
@@ -14,79 +11,38 @@ export class ElevatorSorter {
         this.storage = storage;
     }
 
+    // Riders: serve the side with more destinations first, nearest-first along the
+    // ascending/descending order. On a tie the order is left as it is.
     public defineSortOrderForDelivery() {
-        const { lessThanKeyCount, moreThanKeyCount } = this.getPersonCountByFloors(this.storage.goingPersons, 'Destination')
-
-        if (moreThanKeyCount > lessThanKeyCount) {
-            this.sortPersonAscendingByKey(this.storage.goingPersons, 'Destination');
-        } else if (lessThanKeyCount > moreThanKeyCount) {
-            this.sortPersonDescendingByKey(this.storage.goingPersons, 'Destination');
-        } else if (lessThanKeyCount === moreThanKeyCount) {
-            // pass persons to this func and check this for awating people - pass awating, sort going
-            // if counts equals after that still check random direction
-            console.log('ForDelivery - lessThanCurCount === moreThanCurCount');
+        const balance = this.countAboveMinusBelow(this.storage.goingPersons, 'Destination');
+        if (balance !== 0) {
+            sortByKey(this.storage.goingPersons, 'Destination', balance > 0 ? 1 : -1);
         }
     }
 
+    // Callers: go to the extreme floor on the side with more callers first
+    // (extreme points priority). On a tie the order is left as it is.
     public defineSortOrderForTargeting() {
-        const { lessThanKeyCount, moreThanKeyCount } = this.getPersonCountByFloors(this.storage.awatingPersons, 'CurrentFloor')
-
-        if (moreThanKeyCount > lessThanKeyCount) {
-            this.sortPersonDescendingByKey(this.storage.awatingPersons, 'CurrentFloor');
-        } else if (lessThanKeyCount > moreThanKeyCount) {
-            this.sortPersonAscendingByKey(this.storage.awatingPersons, 'CurrentFloor');
-        } else if (lessThanKeyCount === moreThanKeyCount) {
-            console.log('defineSortOrderForTargeting - lessThanCurCount === moreThanCurCount');
+        const balance = this.countAboveMinusBelow(this.storage.awatingPersons, 'CurrentFloor');
+        if (balance !== 0) {
+            sortByKey(this.storage.awatingPersons, 'CurrentFloor', balance > 0 ? -1 : 1);
         }
     }
 
-    private sortPersonAscendingByKey(arr: Person[], key: keyof Person) {
-        this.sortPersonByDirectionAndByKey(arr, SortDirection.Ascending, key)
-    }
-
-    private sortPersonDescendingByKey(arr: Person[], key: keyof Person) {
-        this.sortPersonByDirectionAndByKey(arr, SortDirection.Descending, key)
-    }
-
-    private sortPersonByDirectionAndByKey(arr: Person[], dir: SortDirection, key: keyof Person) {
-        arr.sort((_a, _b) => {
-            const a = _a[key] as number;
-            const b = _b[key] as number;
-
-            if (dir === SortDirection.Ascending) {
-                return this.ascendingOption(a, b);
-            }
-            if (dir === SortDirection.Descending) {
-                return this.descendingOption(a, b);
-            }
-            return 0;
-        });
-    }
-
-    private ascendingOption(a: number, b: number) {
-        if (a < b) return -1;
-        if (a > b) return 1;
-        return 0;
-    }
-
-    private descendingOption(a: number, b: number) {
-        if (a < b) return 1;
-        if (a > b) return -1;
-        return 0;
-    }
-
-    private getPersonCountByFloors(persons: Person[], floorKey: keyof Person) {
-        let countObject = {
-            lessThanKeyCount: 0,
-            moreThanKeyCount: 0
+    // Persons above the elevator minus persons below it; persons on its floor don't count.
+    private countAboveMinusBelow(persons: Person[], key: FloorKey) {
+        const current = this.storage.CurrentFloor;
+        let balance = 0;
+        for (const p of persons) {
+            const floor = p[key] as number;
+            if (floor > current) balance++;
+            else if (floor < current) balance--;
         }
-        persons.forEach(p => {
-            if (p[floorKey] as number > this.storage.CurrentFloor) {
-                countObject.moreThanKeyCount++;
-            } else if (p[floorKey] as number < this.storage.CurrentFloor) {
-                countObject.lessThanKeyCount++;
-            }
-        });
-        return countObject;
+        return balance;
     }
+}
+
+// Stable in-place sort: 1 = ascending, -1 = descending.
+function sortByKey(persons: Person[], key: FloorKey, direction: 1 | -1) {
+    persons.sort((a, b) => direction * ((a[key] as number) - (b[key] as number)));
 }

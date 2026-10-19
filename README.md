@@ -14,16 +14,23 @@ npm install
 npm run dev        # dev server at http://localhost:5173
 npm run build      # type-check and build to dist/
 npm run preview    # serve the production build
-npm test           # elevator logic tests (Vitest)
+npm test           # elevator logic tests (Vitest), incl. golden traces
 ```
 
 ## Project layout
 
 - `src/Elevator` – the elevator: storage, mover, loader, sorter
-- `src/helpers` – call queue and the built-in test situations
+- `src/helpers` – the built-in test situations
 - `src/types` – floors, persons, options
 - `src/components` – Preact UI (`ElevatorManagement`, `ElevatorFloor`, `Icon`)
 
 ## Ideas and backlog
 
 See [`to do.txt`](./to%20do.txt).
+
+## Golden traces
+
+`src/Elevator/__tests__/golden.json` pins the exact behavior of the elevator logic: every
+rendered state, tick by tick, across the built-in situations and 300 seeded random
+scenarios. Refactors must keep it passing. After an intentional behavior change,
+regenerate it with `UPDATE_GOLDEN=1 npm test` and commit the new file.

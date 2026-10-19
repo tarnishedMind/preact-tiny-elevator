@@ -1,12 +1,7 @@
 import { FloorType } from '../../types/FloorType';
-import { MoveDirection } from '../../types/MoveDirection';
 import { ElevatorStorage } from './ElevatorStorage';
 
-interface ElevatorMoverInterface {
-    chooseMoveAndGo(floor: number): void
-}
-
-export class ElevatorMover implements ElevatorMoverInterface {
+export class ElevatorMover {
 
     private storage: ElevatorStorage;
 
@@ -14,50 +9,26 @@ export class ElevatorMover implements ElevatorMoverInterface {
         this.storage = storage;
     }
 
+    // Moves the elevator one floor towards `floor`, if it isn't there already.
     public chooseMoveAndGo(floor: number) {
-        const currentFloor = this.storage.CurrentFloor;
-        if (floor < currentFloor) {
-            this.move(MoveDirection.Down);
-        } else if (floor > currentFloor) {
-            this.move(MoveDirection.Up);
-        } else if (floor === currentFloor) {
+        const { floors, goingPersons } = this.storage;
+        const current = this.storage.CurrentFloor;
+        if (floor === current) {
             return;
         }
-    }
 
-    private move(dir: MoveDirection) {
-        const prevFloor = this.storage.CurrentFloor;
-        this.fillPrevFloor(prevFloor);
+        const left = floors[current];
+        left.State = left.AwatingPersonCount ? FloorType.PersonAwaiting : FloorType.EmptyFloor;
+        left.GoingPersonCount = 0;
 
-        this.changeFloorByDirection(dir);
-        
-        const floorAfterChange = this.storage.CurrentFloor;
-        this.fillCurrentFloor(floorAfterChange);
-    }
+        this.storage.moveBy(floor > current ? 1 : -1);
 
-    private fillPrevFloor(floorBeforeMove: number) {
-        let i = floorBeforeMove;
-        if (this.storage.floors[i].AwatingPersonCount) {
-            this.storage.floors[i].State = FloorType.PersonAwaiting;
+        const reached = floors[this.storage.CurrentFloor];
+        if (goingPersons.length > 0) {
+            reached.State = FloorType.PersonInElevator;
+            reached.GoingPersonCount = goingPersons.length;
         } else {
-            this.storage.floors[i].State = FloorType.EmptyFloor;
-        }
-        this.storage.floors[i].GoingPersonCount = 0;
-    }
-
-    private changeFloorByDirection(dir: MoveDirection) {
-        dir === MoveDirection.Down ? this.storage.decrementCurrentFloor() : this.storage.incrementCurrentFloor();
-    }
-
-    private fillCurrentFloor(floorAfterMove: number) {
-        let i = floorAfterMove;
-        if (this.storage.goingPersons.length === 0) {
-            this.storage.floors[i].State = FloorType.EmptyElevator;
-        }
-        if (this.storage.goingPersons.length > 0) {
-            this.storage.floors[i].State = FloorType.PersonInElevator;
-            this.storage.floors[i].GoingPersonCount = this.storage.goingPersons.length;
+            reached.State = FloorType.EmptyElevator;
         }
     }
-
 }

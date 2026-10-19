@@ -2,12 +2,9 @@ import { FloorType } from '../../types/FloorType';
 import { PersonType } from '../../types/PersonType';
 import { ElevatorStorage } from './ElevatorStorage';
 
-interface ElevatorLoaderInterface {
-    loadElevator(floor: number): void;
-    unloadElevator(floor: number): void;
-}
+const ARRIVED_VIEW_MS = 1000;
 
-export class ElevatorLoader implements ElevatorLoaderInterface {
+export class ElevatorLoader {
 
     private targetClearer: () => void;
     private storage: ElevatorStorage;
@@ -17,62 +14,60 @@ export class ElevatorLoader implements ElevatorLoaderInterface {
         this.storage = storage;
     }
 
+    // Boards the callers waiting on `floor`, in call order, while there is room.
     public loadElevator(floor: number) {
-        if (floor === this.storage.CurrentFloor && this.storage.floors[floor].AwatingPersonCount > 0 && this.isFreePlace()) {
-            this.loadElevatorByFloor(floor);
+        const { storage } = this;
+        const waiting = storage.floors[floor];
+        if (floor !== storage.CurrentFloor || waiting.AwatingPersonCount === 0 || storage.FreePlaces === 0) {
+            return;
         }
+
+        // Remove boarded persons from the queue in place, in a single pass.
+        const queue = storage.awatingPersons;
+        let kept = 0;
+        for (const p of queue) {
+            if (p.CurrentFloor === floor && storage.FreePlaces > 0) {
+                p.State = PersonType.InElevator;
+                storage.addPersonByState(p);
+                waiting.AwatingPersonCount--;
+            } else {
+                queue[kept++] = p;
+            }
+        }
+        queue.length = kept;
     }
 
     public unloadElevator(floor: number) {
-        if (floor === this.storage.CurrentFloor && this.storage.floors[floor].GoingPersonCount > 0) {
-            this.unloadElevatorByFloor(floor);
+        const { storage } = this;
+        const target = storage.floors[floor];
+        if (floor !== storage.CurrentFloor || target.GoingPersonCount === 0) {
+            return;
         }
-    }  
 
-    private isFreePlace() {
-        return this.storage.goingPersons.length < this.storage.Capacity;
-    }
-
-    private loadElevatorByFloor(idx: number) {
-        for (let i = 0; i < this.storage.awatingPersons.length; i++) {
-            const p = this.storage.awatingPersons[i];
-
-            if (p.CurrentFloor === idx && this.isFreePlace()) {
-                p.State = PersonType.InElevator;
-                this.storage.addPersonByState(p);
-
-                this.storage.floors[idx].AwatingPersonCount--;
-                this.storage.awatingPersons.splice(i, 1);
-                i--;
+        // Kept exactly as the original algorithm: the scan index moves forward while each
+        // match takes the rider at the front of the delivery order off the elevator.
+        const riders = storage.goingPersons;
+        let arrivedCount = 0;
+        for (let i = 0; i < riders.length; i++) {
+            if (riders[i].Destination !== floor) {
+                continue;
             }
-        }
-    }
-
-    private unloadElevatorByFloor(idx: number) {
-        for (let i = 0; i < this.storage.goingPersons.length; i++) {
-            const p = this.storage.goingPersons[i];
-
-            if (p.Destination === idx) {
-                this.storage.floors[idx].GoingPersonCount--;
-                this.storage.floors[idx].ArrivedPersonCountView++;
-
-                setTimeout(() => {
-                    this.storage.floors[idx].ArrivedPersonCountView = 0;
-                    this.storage.updateState();
-                }, 1000);
-
-                if (this.storage.floors[idx].GoingPersonCount === 0) {
-                    this.storage.floors[idx].State = FloorType.EmptyElevator;
-                }
-
-                const arrived = this.storage.goingPersons.splice(0, 1)[0];
-                arrived.State = PersonType.Done;
-                console.log(arrived, ' --- Was arrived! --- ');
-
-                this.targetClearer();
+            target.GoingPersonCount--;
+            target.ArrivedPersonCountView++;
+            if (target.GoingPersonCount === 0) {
+                target.State = FloorType.EmptyElevator;
             }
+
+            (riders.shift() as typeof riders[number]).State = PersonType.Done;
+            arrivedCount++;
+            this.targetClearer();
+        }
+
+        if (arrivedCount > 0) {
+            setTimeout(() => {
+                target.ArrivedPersonCountView = 0;
+                storage.updateState();
+            }, ARRIVED_VIEW_MS);
         }
     }
-
-
 }
