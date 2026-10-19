@@ -1,70 +1,54 @@
 import { faUser, faWalking } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React from 'react';
+import type { ComponentChildren } from 'preact';
 import { Floor } from '../types/Floor';
 import { FloorType } from '../types/FloorType';
+import { Icon } from './Icon';
 
 interface ElevatorFloorProps {
     floorNumber: number,
     floorOptions: Floor
 }
 
-export default class ElevatorFloor extends React.Component<ElevatorFloorProps> {
+const userIcon = <Icon icon={faUser} />;
+const walkingIcon = <Icon icon={faWalking} />;
 
-    private userIcon = <FontAwesomeIcon icon={faUser} />;
-    private walkingIcon = <FontAwesomeIcon icon={faWalking} />;
-    
-    private cellContent: string | JSX.Element = '';
+const getUserIconContentByCount = (count: number) => {
+    return count > 0 ? <>{userIcon} {`: ${count}`}</> : <></>;
+}
 
-    private fillCellContent = (type: FloorType): void => {
-        switch (type) {
-            case FloorType.EmptyElevator:
-                this.cellContent = '|_____|';
-                break;
-            case FloorType.EmptyFloor:
-                this.cellContent = '_____';
-                break;
-            case FloorType.PersonAwaiting:
-                this.cellContent = `Awaiting`;
-                break;
-            case FloorType.PersonInElevator:
-                const count = this.props.floorOptions.GoingPersonCount;
-                this.cellContent = <>| {this.getUserIconContentByCount(count)} |</>;
-                break;
+const getWalkingIconContentByCount = (count: number) => {
+    return count > 0 ? <>{walkingIcon} {`: ${count}`}</> : <></>;
+}
 
-            default:
-                throw new Error("Incorrect FloorType!");
-        }
+const getCellContent = (floorOptions: Floor): ComponentChildren => {
+    switch (floorOptions.State) {
+        case FloorType.EmptyElevator:
+            return '|_____|';
+        case FloorType.EmptyFloor:
+            return '_____';
+        case FloorType.PersonAwaiting:
+            return `Awaiting`;
+        case FloorType.PersonInElevator:
+            return <>| {getUserIconContentByCount(floorOptions.GoingPersonCount)} |</>;
+
+        default:
+            throw new Error("Incorrect FloorType!");
     }
+}
 
-    private getCountContent = () => {
-        let awaitCount = this.props.floorOptions.AwatingPersonCount;
-        let arrivedCount = this.props.floorOptions.ArrivedPersonCountView;
+const getCountContent = (floorOptions: Floor) => {
+    const awaitContent = getUserIconContentByCount(floorOptions.AwatingPersonCount);
+    const arrivedContent = getWalkingIconContentByCount(floorOptions.ArrivedPersonCountView);
 
-        let awaitContent = this.getUserIconContentByCount(awaitCount);        
-        let arrivedContent = this.getWalkingIconContentByCount(arrivedCount);
+    return <>{awaitContent} {arrivedContent}</>;
+}
 
-        return <>{awaitContent} {arrivedContent}</>;
-    }
-
-    private getUserIconContentByCount = (count: number): JSX.Element => {
-        return count > 0 ? <>{this.userIcon} {`: ${count}`}</> : <></>;
-    }
-
-    private getWalkingIconContentByCount = (count: number): JSX.Element => {
-        return count > 0 ? <>{this.walkingIcon} {`: ${count}`}</> : <></>;
-    }
-
-    render(): JSX.Element {
-        let floorType = this.props.floorOptions.State;
-        this.fillCellContent(floorType);
-
-        return (
-            <div className="floor">
-                <h1 className="number">{this.props.floorNumber}</h1>
-                <p className="cell">{this.cellContent}</p>
-                <p className="count">{this.getCountContent()}</p>
-            </div>
-        );
-    }
+export default function ElevatorFloor({ floorNumber, floorOptions }: ElevatorFloorProps) {
+    return (
+        <div className="floor">
+            <h1 className="number">{floorNumber}</h1>
+            <p className="cell">{getCellContent(floorOptions)}</p>
+            <p className="count">{getCountContent(floorOptions)}</p>
+        </div>
+    );
 }

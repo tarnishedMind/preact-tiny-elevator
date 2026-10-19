@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Elevator } from '../Elevator/Elevator';
 import { TestSituation } from '../helpers/ElevatorSituations';
 import { Floor } from '../types/Floor';
@@ -7,96 +7,84 @@ import { Situation } from '../types/Situation';
 import { getRandomIntInclusive } from '../utils/getRandomIntInclusive';
 import ElevatorFloor from './ElevatorFloor';
 
-interface ElevatorProps {
-}
+export default function ElevatorManagement() {
+    const [floors, setFloors] = useState<Floor[]>([]);
 
-interface ElevatorState {
-    floors: Floor[]
-}
+    const currentSituation = useRef<Situation>(TestSituation.get(0));
+    const persons = useRef<Array<Person>>(currentSituation.current.persons);
+    const myElevator = useRef<Elevator>(null as unknown as Elevator);
+    const timer = useRef<ReturnType<typeof setInterval>>();
 
-export default class ElevatorManagement extends React.Component<ElevatorProps, ElevatorState> {
-    private currentSituation: Situation;
-    private myElevator: Elevator;
-    private persons: Array<Person>;
-    private timer: any;    
-
-    constructor(props: ElevatorProps) {
-        super(props);
-
-        this.state = {
-            floors: []
-        }
-
-        this.currentSituation = TestSituation.get(0);
-        this.persons = this.currentSituation.persons;
-        this.myElevator = new Elevator(this.currentSituation.options);     
-        this.myElevator.setUpdaterFunc(
-            (floors: Floor[]) => this.setState({ ...this.state, floors: floors })
-        );
+    // The elevator mutates its floors array in place, so hand the state a new
+    // array to trigger a render. slice() keeps the holes below starterFloor.
+    const createElevator = (situation: Situation) => {
+        const elevator = new Elevator(situation.options);
+        elevator.setUpdaterFunc((floors: Floor[]) => setFloors(floors.slice()));
+        return elevator;
     }
 
-    public componentDidMount() {
-        this.initPersons();
+    if (myElevator.current === null) {
+        myElevator.current = createElevator(currentSituation.current);
     }
 
-    public start = () => {
-        this.timer = setInterval(this.tick, 500);
+    const initPersons = () => {
+        persons.current.forEach(p => myElevator.current.callElevator(p));
     }
 
-    public stop = () => {
-        clearInterval(this.timer);
+    useEffect(() => {
+        initPersons();
+        return () => clearInterval(timer.current);
+    }, []);
+
+    const tick = () => {
+        myElevator.current.processing();
     }
 
-    public tick = () => {
-        this.myElevator.processing();
-    }    
-
-    public getTest = (n: number) => {
-        this.currentSituation = TestSituation.get(n);
-        this.persons = this.currentSituation.persons;
-        this.myElevator = new Elevator(this.currentSituation.options); 
-        this.myElevator.setUpdaterFunc(
-            (floors: Floor[]) => this.setState({ ...this.state, floors: floors })
-        ); 
-        
-        this.initPersons();
-        this.myElevator.updateState();
+    const start = () => {
+        timer.current = setInterval(tick, 500);
     }
 
-    public generatePersons = (count = 1) => {
-        const min = this.currentSituation.options.starterFloor;
-        const max = this.currentSituation.options.floorCount;
+    const stop = () => {
+        clearInterval(timer.current);
+    }
+
+    const getTest = (n: number) => {
+        currentSituation.current = TestSituation.get(n);
+        persons.current = currentSituation.current.persons;
+        myElevator.current = createElevator(currentSituation.current);
+
+        initPersons();
+        myElevator.current.updateState();
+    }
+
+    const generatePersons = (count = 1) => {
+        const min = currentSituation.current.options.starterFloor;
+        const max = currentSituation.current.options.floorCount;
         const rnd = () => getRandomIntInclusive(min, max);
 
         let person = null;
         for (let i = 0; i < count; i++) {
             person = new Person(rnd(), rnd());
-            this.persons.push(person);
-            this.myElevator.callElevator(person);
+            persons.current.push(person);
+            myElevator.current.callElevator(person);
         }
     }
 
-    private initPersons = () => {
-        this.persons.forEach(p => this.myElevator.callElevator(p));
-    }
+    const floorElements = floors.map((f, i) => <ElevatorFloor key={`key${i}`} floorNumber={i} floorOptions={f} />);
+    return (
+        <>
+            <div className="button-box">
+                <button onClick={tick}>One step</button>
+                <button onClick={start}>Start</button>
+                <button onClick={stop}>Stop</button>
+                <button onClick={() => getTest(0)}>Test 1</button>
+                <button onClick={() => getTest(1)}>Test 2</button>
+                <button onClick={() => generatePersons()}>Add person</button>
+            </div>
 
-    render() {
-        const floors = this.state.floors.map((f, i) => <ElevatorFloor key={`key${i}`} floorNumber={i} floorOptions={f} />);
-        return (
-            <>
-                <div className="button-box">
-                    <button onClick={this.tick}>One step</button>
-                    <button onClick={this.start}>Start</button>
-                    <button onClick={this.stop}>Stop</button>
-                    <button onClick={() => this.getTest(0)}>Test 1</button>
-                    <button onClick={() => this.getTest(1)}>Test 2</button>
-                    <button onClick={() => this.generatePersons()}>Add person</button>
-                </div>
-
-                <div className="elevator">
-                    {floors}
-                </div>
-            </>
-        );
-    }
+            <div className="elevator">
+                {floorElements}
+            </div>
+        </>
+    );
 }
