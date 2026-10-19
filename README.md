@@ -9,6 +9,7 @@ on top of the `feature/fields-access` branch; the elevator logic in `src/Elevato
 ## Scripts
 
 ```sh
+nvm use           # Node 22, from .nvmrc
 npm install
 npm run dev        # dev server at http://localhost:5173
 npm run build      # type-check and build to dist/
