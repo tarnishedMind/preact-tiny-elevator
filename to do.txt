@@ -1,22 +1,37 @@
-Панель для опционального добавления человека
+ELEVATOR: IDEAS AND BACKLOG
+===========================
 
-Режимы игры: 
-стратегическое планирование - есть заготовленная обстановка (определенная нагрузка на лифт которая нам видна перед началом) - нужна стратегия которая пройдёт уровень
-
-нужно запустить лифт из определенной точки и уложиться за наименьшее кол-во ходов
-
-Варианты:
-- кастомизируемый алгоритм работы лифта который мы можем настраивать под определенный уровень
-- пошаговое управление лифтом
-
-вариант когда мы высаживаем человека и подбираем после поскольку есть время ожидания которое нельзя передержать 
-(такую модель можно переобыграть и это уже вовсе не лифт) ... расширение до двумерной карты ... 
+UI
+--
+- [ ] Panel for adding a person manually (choose start floor and destination)
 
 
-ЧТО ЕСЛИ ПОТОМ СДЕЛАТЬ ДЕНЬ И НОЧЬ !!!
-симулировать рабочий день в офисе
-ночью кто-то может ездить в лифте рандомно
-люди приходят на работу
-===
+GAME MODES
+----------
+Strategic planning
+  Each level has a predefined situation: the elevator load is known and
+  visible before the start. The player needs a strategy that clears the level.
 
-floor -> stage ???
+  Goal: start the elevator from a given floor and finish in the fewest moves.
+
+  How the player controls the elevator:
+  - Customizable elevator algorithm that can be tuned for a specific level
+  - Step-by-step manual control of the elevator
+
+Drop off and pick up later
+  People have a maximum waiting time that must not be exceeded, so the
+  elevator may drop someone off early and pick them up again later.
+  Note: this model could be reworked into something that is no longer an
+  elevator at all, e.g. extended to a 2D map.
+
+
+DAY AND NIGHT CYCLE
+-------------------
+Simulate a working day in an office:
+- Morning: people arrive at work
+- Night: occasional random rides
+
+
+OPEN QUESTIONS
+--------------
+- Rename "floor" to "stage"?
