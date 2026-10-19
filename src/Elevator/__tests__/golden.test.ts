@@ -2,8 +2,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildScenarios, hashTrace, traceScenario } from './scenarios';
 
-// Golden traces pin the elevator's exact observable behavior. They were recorded
-// from the original (pre-refactor) logic; a refactor must keep every hash equal.
+// Golden traces pin the elevator's exact observable behavior, so refactors can
+// prove they change nothing: every hash must stay equal.
 // After an intentional behavior change, regenerate with: UPDATE_GOLDEN=1 npm test
 const goldenPath = new URL('./golden.json', import.meta.url);
 

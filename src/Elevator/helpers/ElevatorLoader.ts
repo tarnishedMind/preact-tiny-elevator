@@ -44,30 +44,33 @@ export class ElevatorLoader {
             return;
         }
 
-        // Kept exactly as the original algorithm: the scan index moves forward while each
-        // match takes the rider at the front of the delivery order off the elevator.
+        // Everyone riding to this floor gets off; the rest keep their delivery order.
         const riders = storage.goingPersons;
-        let arrivedCount = 0;
-        for (let i = 0; i < riders.length; i++) {
-            if (riders[i].Destination !== floor) {
-                continue;
+        let kept = 0;
+        for (const p of riders) {
+            if (p.Destination === floor) {
+                p.State = PersonType.Done;
+            } else {
+                riders[kept++] = p;
             }
-            target.GoingPersonCount--;
-            target.ArrivedPersonCountView++;
-            if (target.GoingPersonCount === 0) {
-                target.State = FloorType.EmptyElevator;
-            }
+        }
+        const arrivedCount = riders.length - kept;
+        riders.length = kept;
 
-            (riders.shift() as typeof riders[number]).State = PersonType.Done;
-            arrivedCount++;
-            this.targetClearer();
+        if (arrivedCount === 0) {
+            return;
         }
 
-        if (arrivedCount > 0) {
-            setTimeout(() => {
-                target.ArrivedPersonCountView = 0;
-                storage.updateState();
-            }, ARRIVED_VIEW_MS);
+        target.GoingPersonCount -= arrivedCount;
+        target.ArrivedPersonCountView += arrivedCount;
+        if (target.GoingPersonCount === 0) {
+            target.State = FloorType.EmptyElevator;
         }
+        this.targetClearer();
+
+        setTimeout(() => {
+            target.ArrivedPersonCountView = 0;
+            storage.updateState();
+        }, ARRIVED_VIEW_MS);
     }
 }
