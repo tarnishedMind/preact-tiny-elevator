@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Elevator } from '../Elevator/Elevator';
 import { TestSituation } from '../helpers/ElevatorSituations';
+import { usePeopleFeed } from '../hooks/usePeopleFeed';
 import { Floor } from '../types/Floor';
 import { Person } from '../types/Person';
 import { Situation } from '../types/Situation';
 import { getRandomIntInclusive } from '../utils/getRandomIntInclusive';
 import ElevatorFloor from './ElevatorFloor';
+import TrafficControls from './TrafficControls';
 
 export default function ElevatorManagement() {
     const [floors, setFloors] = useState<Floor[]>([]);
@@ -57,18 +59,23 @@ export default function ElevatorManagement() {
         myElevator.current.updateState();
     }
 
+    const addPerson = (from: number, to: number) => {
+        const person = new Person(from, to);
+        persons.current.push(person);
+        myElevator.current.callElevator(person);
+    }
+
     const generatePersons = (count = 1) => {
         const min = currentSituation.current.options.starterFloor;
         const max = currentSituation.current.options.floorCount;
         const rnd = () => getRandomIntInclusive(min, max);
 
-        let person = null;
         for (let i = 0; i < count; i++) {
-            person = new Person(rnd(), rnd());
-            persons.current.push(person);
-            myElevator.current.callElevator(person);
+            addPerson(rnd(), rnd());
         }
     }
+
+    const feed = usePeopleFeed(currentSituation.current.options, addPerson);
 
     const floorElements = floors.map((f, i) => <ElevatorFloor key={`key${i}`} floorNumber={i} floorOptions={f} />);
     return (
@@ -81,6 +88,8 @@ export default function ElevatorManagement() {
                 <button onClick={() => getTest(1)}>Test 2</button>
                 <button onClick={() => generatePersons()}>Add person</button>
             </div>
+
+            <TrafficControls feed={feed} />
 
             <div className="elevator">
                 {floorElements}
